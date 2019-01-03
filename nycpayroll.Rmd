@@ -1,26 +1,38 @@
 ```{r}
 library(tidyverse)
 library(gender)
-```
-```{r}
-nyc_data <- read_csv(file = 'Downloads/Citywide_Payroll_Data__Fiscal_Year_.csv')
-nyc_data <- select(nyc_data, -'Payroll Number')
-```
-```{r}
-nyc_data <- nyc_data %>% 
-  mutate(total_pay = `Regular Gross Paid` + `Total OT Paid` + `Total Other Pay`) %>%
-  mutate(birth_year = '1970')
+library(lubridate)
 
-nyc_data <- nyc_data %>%
+nyc_payroll_data <- read_csv(file = 'datasets/citywide_payroll_data.csv')
+nyc_payroll_data <- select(nyc_payroll_data, -'Payroll Number')
+
+nyc_payroll_data <- nyc_payroll_data %>% 
+  mutate(total_pay = `Regular Gross Paid` + `Total OT Paid` + `Total Other Pay`) %>%
+  mutate(birth_year = '1980')
+
+nyc_payroll_data <- nyc_payroll_data %>%
   rename(first_name = `First Name`)
-  
-  
-results <- gender_df(nyc_data, name_col = "first_name", year_col = "birth_year" ,
+
+results <- gender_df(nyc_payroll_data, name_col = "first_name",  year_col = "birth_year",
                      method = 'ssa')
 
-nyc_data <- nyc_data %>%
+nyc_payroll_data <- nyc_payroll_data %>%
   left_join(results, by = c("first_name" = "name"))
 
+nyc_2018 <- nyc_payroll_data %>%
+  filter(`Fiscal Year` == '2018')
+nyc_2017 <- nyc_payroll_data %>%
+  filter(`Fiscal Year` == '2017')
+nyc_2016 <- nyc_payroll_data %>%
+  filter(`Fiscal Year` == '2016')
+nyc_2015 <- nyc_payroll_data %>%
+  filter(`Fiscal Year` == '2015')
+nyc_2014 <- nyc_payroll_data %>%
+  filter(`Fiscal Year` == '2014')
+
+gender <- nyc_2018 %>%
+  filter(is.na('gender'))
+          
+         
 
 ```
-
