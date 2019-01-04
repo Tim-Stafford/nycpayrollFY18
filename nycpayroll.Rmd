@@ -3,7 +3,7 @@ library(tidyverse)
 library(gender)
 library(lubridate)
 
-nyc_payroll_data <- read_csv(file = 'datasets/citywide_payroll_data.csv')
+nyc_payroll_data <- read_csv(file = 'Citywide_Payroll_Data__Fiscal_Year_.csv')
 nyc_payroll_data <- select(nyc_payroll_data, -'Payroll Number')
 
 nyc_payroll_data <- nyc_payroll_data %>% 
@@ -30,9 +30,13 @@ nyc_2015 <- nyc_payroll_data %>%
 nyc_2014 <- nyc_payroll_data %>%
   filter(`Fiscal Year` == '2014')
 
-gender <- nyc_2018 %>%
-  filter(is.na('gender'))
-          
+
+end_2018 <- mdy(06302018)
+nyc_2018 <- nyc_2018 %>%
+  mutate(service_years = interval(end_2018, mdy(`Agency Start Date`))) %>%
+  mutate(service_years = as.numeric(as.period(service_years, unit = "year")))
+  
+
          
 
 ```
