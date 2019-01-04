@@ -3,40 +3,66 @@ library(tidyverse)
 library(gender)
 library(lubridate)
 
-nyc_payroll_data <- read_csv(file = 'Citywide_Payroll_Data__Fiscal_Year_.csv')
+#load data
+nyc_payroll_data <- read_csv(file = 'citywide_payroll_data.csv')
 nyc_payroll_data <- select(nyc_payroll_data, -'Payroll Number')
 
-nyc_payroll_data <- nyc_payroll_data %>% 
-  mutate(total_pay = `Regular Gross Paid` + `Total OT Paid` + `Total Other Pay`) %>%
-  mutate(birth_year = '1980')
 
-nyc_payroll_data <- nyc_payroll_data %>%
-  rename(first_name = `First Name`)
-
-results <- gender_df(nyc_payroll_data, name_col = "first_name",  year_col = "birth_year",
-                     method = 'ssa')
+# Use gender library to 
+results <- gender_df(nyc_payroll_data, name_col = "first_name", year_col = c("birth_year1", "birth_year2"),
+                     method = 'ssa')  # 9% of names are unknown, we should drop for  gender analysis.
 
 nyc_payroll_data <- nyc_payroll_data %>%
   left_join(results, by = c("first_name" = "name"))
 
-nyc_2018 <- nyc_payroll_data %>%
-  filter(`Fiscal Year` == '2018')
-nyc_2017 <- nyc_payroll_data %>%
-  filter(`Fiscal Year` == '2017')
-nyc_2016 <- nyc_payroll_data %>%
-  filter(`Fiscal Year` == '2016')
-nyc_2015 <- nyc_payroll_data %>%
-  filter(`Fiscal Year` == '2015')
-nyc_2014 <- nyc_payroll_data %>%
-  filter(`Fiscal Year` == '2014')
 
 
-end_2018 <- mdy(06302018)
-nyc_2018 <- nyc_2018 %>%
-  mutate(service_years = interval(end_2018, mdy(`Agency Start Date`))) %>%
-  mutate(service_years = as.numeric(as.period(service_years, unit = "year")))
+# Cleanup & Feature Creation
+
+results <- gender_df(nyc_payroll_data, name_col = "first_name", year_col = c("birth_year1", "birth_year2"),
+                     method = 'ssa')  # 9% of names are unknown, we should drop for  gender analysis.
+
+nyc_payroll_data <- nyc_payroll_data %>%
+  left_join(results, by = c("first_name" = "name"))
+
+
+nyc_payroll_data <- nyc_payroll_data %>% 
+  mutate(total_pay = `Regular Gross Paid` + `Total OT Paid` + `Total Other Pay`) %>%
+  mutate(total_hours = 'Regular Hours' + 'OT Hours') %>%
   
+  mutate(birth_year1 = '1932') %>%
+  mutate(birth_year2 = '2012')
 
-         
+nyc_payroll_data <- nyc_payroll_data %>%
+  rename(first_name = `First Name`)
+
+end_2018 <- mdy(06302018)  # - Creating 'service_years' variable for seniority measurement.
+nyc_payroll_data <- nyc_payroll_data %>%
+  mutate(service_years = interval(end_2018, mdy(`Agency Start Date`))) %>%
+  mutate(service_years = as.numeric(as.period(service_years, unit = "year")) * -3.1689E-8) %>%
+  mutate(service_years = round(service_years, digits = 0))
+
+
+
+nyc_payroll_data %>%
+filter(`Fiscal Year` == 2018) %>%
+ggplot(., aes(service_years, total_pay, colour = gender, )) +
+  geom_point() + 
+  xlim(0,60) + 
+  ylim(0, 400000)
+
+
 
 ```
+
+
+```{r}
+nyc_payroll_data %>%
+filter('Fiscal Year' == 2018 & 'Agency Name' == 'POLICE DEPARTMENT') %>%
+ggplot(., aes(service_years, total_pay, colour = gender, )) +
+  geom_point() + 
+  xlim(0,60) + 
+  ylim(0, 400000)
+
+```
+
