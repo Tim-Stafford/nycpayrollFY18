@@ -6,7 +6,7 @@ library(janitor)
 library(ggthemes)
 
 #load data
-nyc_raw <- read_csv(file = 'data/citywide_payroll_data.csv')
+nyc_raw <- read_csv(file = 'dataset/citywide_payroll_data.csv')
 
 nyc_data <- nyc_raw %>%
 clean_names()
@@ -54,12 +54,7 @@ nypd_data <- nyc_data %>%
 ```
 ```{r}
 
-ggplot(data = nypd_data, aes(gender))+
-  geom_bar(stat = 'count')+
-  facet_grid('fiscal_year') +
-  scale_fill_manual(values = c("pink", "blue")) +
-  labs(x = 'Percent') +
-  theme_economist() + scale_color_economist()
+
 
 ```
 
@@ -106,14 +101,12 @@ nypd_data %>%
 
 nypd_data %>%
   filter(fiscal_year == 2018) %>%
-  group_by(gender, title_description) %>%
-  summarise(count = n(),
-            median_pay = median(total_pay),
-            max_pay = max(total_pay),
-            max_ot = max(ot_hours),
-            median_ot = median(ot_hours),
-            median_service = median(service_years)) %>%
-  arrange(desc(max_ot))
+  group_by(title_description, gender) %>%
+  summarise(N = n()) %>%
+  mutate(freq = N / sum(N),
+         pct = round(freq*100), 0) %>%
+  arrange(desc(N))
+
 
 
 ```
