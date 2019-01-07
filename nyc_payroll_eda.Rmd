@@ -1,0 +1,120 @@
+```{r}
+library(tidyverse)
+library(gender)
+library(lubridate)
+library(janitor)
+library(ggthemes)
+
+#load data
+nyc_raw <- read_csv(file = 'data/citywide_payroll_data.csv')
+
+nyc_data <- nyc_raw %>%
+clean_names()
+
+  
+#Create Features
+
+nyc_data <- nyc_data %>%
+mutate(total_pay = regular_gross_paid + total_ot_paid + total_other_pay) %>%
+mutate(total_hours = regular_hours + ot_hours) %>%
+mutate(birth_year1 = '1932') %>%
+mutate(birth_year2 = '2012')
+
+# Create gender column and service years column.
+
+results <- gender_df(nyc_data, name_col = "first_name", year_col = c("birth_year1", "birth_year2"),
+                     method = 'ssa')
+nyc_data <- nyc_data %>%
+  left_join(results, by = c("first_name" = "name"))
+
+end_2018 <- mdy(06302018)  # - Creating 'service_years' variable for seniority measurement.
+nyc_data <- nyc_data %>%
+  mutate(service_years = interval(end_2018, mdy(`agency_start_date`))) %>%
+  mutate(service_years = as.numeric(as.period(service_years, unit = "year")) * -3.1689E-8) %>%
+  mutate(service_years = round(service_years, digits = 0))
+
+# Drop unneeded columns
+
+nyc_data <- nyc_data %>%
+select(-c(payroll_number, birth_year1, birth_year2, proportion_male, proportion_female, year_min, year_max))
+
+# Assorted cleanup
+
+
+```
+
+```{r}
+
+### NYPD EDA
+
+nypd_data <- nyc_data %>%
+  filter(agency_name == 'POLICE DEPARTMENT') %>%
+  filter(!is.na(gender),
+         total_pay > 30000)
+```
+```{r}
+
+ggplot(data = nypd_data, aes(gender))+
+  geom_bar(stat = 'count')+
+  facet_grid('fiscal_year') +
+  scale_fill_manual(values = c("pink", "blue")) +
+  labs(x = 'Percent') +
+  theme_economist() + scale_color_economist()
+
+```
+
+
+```{r}
+nypd_data %>%
+  filter(fiscal_year == 2018) %>%
+  group_by(gender, work_location_borough) %>%
+  summarise(count = n()) %>%
+ggplot(., aes(work_location_borough, count, fill = gender))+
+  geom_col(stat = 'count')+
+  theme_economist() + scale_color_economist()+
+
+
+
+```
+
+```{r} 
+# Median Pay by Gender
+
+
+
+nypd_data %>%
+  ggplot(aes(gender, total_pay))+
+  geom_col()+
+  theme_economist() + scale_color_economist()+
+  labs(title = "NYPD - Box plot of", x = NULL, 
+    y = "Yearly Pay")+
+  facet_grid('fiscal_year')
+
+
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+nypd_data %>%
+  filter(fiscal_year == 2018) %>%
+  group_by(gender, title_description) %>%
+  summarise(count = n(),
+            median_pay = median(total_pay),
+            max_pay = max(total_pay),
+            max_ot = max(ot_hours),
+            median_ot = median(ot_hours),
+            median_service = median(service_years)) %>%
+  arrange(desc(max_ot))
+
+
+```
+
