@@ -48,12 +48,24 @@ select(-c(payroll_number, birth_year1, birth_year2, proportion_male, proportion_
 ### NYPD EDA
 
 nypd_data <- nyc_data %>%
-  filter(agency_name == 'POLICE DEPARTMENT') %>%
-  filter(!is.na(gender),
-         total_pay > 30000)
+  filter(agency_name == 'POLICE DEPARTMENT')
+
+ggplot(data = nypd_data, aes(gender))+
+  geom_bar(na.rm = TRUE)+
+  geom_text(stat='count', aes(label=..count..), vjust=-.25)+
+  facet_grid(~fiscal_year)
+
 ```
 ```{r}
 
+nypd_data %>%
+  group_by(work_location_borough, gender) %>%
+  summarise(N = n()) %>%
+  mutate(freq = N/sum(N),
+         pct = round(freq*100), 0) %>%
+  ggplot(., aes(x = gender, y = pct))+
+  geom_col()+
+  facet_wrap(~work_location_borough)
 
 
 ```
@@ -102,11 +114,11 @@ nypd_data %>%
 nypd_data %>%
   filter(fiscal_year == 2018) %>%
   group_by(title_description, gender) %>%
-  summarise(N = n()) %>%
+  summarise(N = n(), median_pay = median(total_pay)) %>%
   mutate(freq = N / sum(N),
          pct = round(freq*100), 0) %>%
-  arrange(desc(N))
-
+  filter(gender == 'female') %>%
+  arrange(desc(median_pay))
 
 
 ```
