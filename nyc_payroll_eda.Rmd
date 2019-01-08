@@ -1,8 +1,3 @@
----
-output:
-  pdf_document: default
-  html_document: default
----
 ```{r}
 library(tidyverse)
 library(gender)
@@ -45,30 +40,44 @@ nyc_data <- nyc_data %>%
 nyc_data <- nyc_data %>%
 select(-c(payroll_number, birth_year1, birth_year2, proportion_male, proportion_female, year_min, year_max))
 
-# Assorted cleanup
+# Create Pantaleo
+
+nypd_pantaleo <- nypd_data %>%
+filter(last_name == 'PANTALEO')
 
 
 ```
-
 ```{r}
+nypd_consolidated_titles <- nypd_data %>%
+  mutate(title_description = cont
+
+
+
+````{r}
 
 ### NYPD EDA
 
 nypd_data <- nyc_data %>%
   filter(agency_name == 'POLICE DEPARTMENT') %>%
+  filter(total_pay > 0) %>%
+  filter(service_years > 0) %>%
   mutate(work_location_borough = recode(work_location_borough, "RICHMOND" = 'STATEN ISLAND'))
   
 
-ggplot(data = nypd_data, aes(gender))+
+ggplot(data = nypd_data, aes(gender))+ ## Employees by Year (Gender)
   geom_bar(na.rm = TRUE)+
   geom_text(stat='count', aes(label=..count..), vjust=-.25)+
   facet_grid(~fiscal_year)
 
 ```
+
+
+
+
 ```{r}
 
 nypd_data %>%
-  group_by(work_location_borough, gender) %>%
+  group_by(work_location_borough, gender) %>%  ## Gender % by borough
   summarise(N = n()) %>%
   mutate(freq = N/sum(N),
          pct = round(freq*100), 0) %>%
@@ -80,53 +89,39 @@ nypd_data %>%
 ```
 
 
-```{r}
+```{r} 
+#  Male/Female Median Pay by Median Service Years
+
+
+
 nypd_data %>%
-  filter(fiscal_year == 2018) %>%
-  group_by(gender, work_location_borough) %>%
-  summarise(count = n()) %>%
-ggplot(., aes(work_location_borough, count, fill = gender))+
-  geom_col(stat = 'count')
+  group_by(gender, fiscal_year) %>%
+  summarise(N = n(), median_pay = median(total_pay),
+            median_service = median(service_years)) %>%
+  mutate(freq = N / sum(N), 
+         pct = round(freq*100), 0) %>%
+  filter(gender == 'female') %>%
+  ggplot(., aes(fiscal_year, median_pay, color = gender))+
+  geom_line()+
+  geom_line(data = nypd_pantaleo,aes(x=fiscal_year, y=total_pay, color = last_name))
+
 
 
 
 ```
+
+
 
 ```{r} 
-# Median Pay by Gender
 
-
-
-nypd_data %>%
-  ggplot(aes(gender, total_pay))+
-  geom_col()+
-  theme_economist() + scale_color_economist()+
-  labs(title = "NYPD - Box plot of", x = NULL, 
-    y = "Yearly Pay")+
-  facet_grid('fiscal_year')
-
-
-```
-
-
-
-
-
-
-
-
-
-
-```{r}
-
-nypd_data %>%
+nypd_data %>%  ## -- Lollipop top 10 female jobs + Median Pay / IQR
   filter(fiscal_year == 2018) %>%
-  group_by(title_description, gender) %>%
+  group_by(gender, title_description) %>%
   summarise(N = n(), median_pay = median(total_pay)) %>%
   mutate(freq = N / sum(N),
          pct = round(freq*100), 0) %>%
   filter(gender == 'female') %>%
-  arrange(desc(median_pay))
+  top_n(10, N)
 
 
 ```
