@@ -1,9 +1,16 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
 ```{r}
 library(tidyverse)
 library(gender)
 library(lubridate)
 library(janitor)
 library(ggthemes)
+library (ggthemr)
+ggthemr('flat')
 
 #load data
 nyc_raw <- read_csv(file = 'dataset/citywide_payroll_data.csv')
@@ -48,7 +55,9 @@ select(-c(payroll_number, birth_year1, birth_year2, proportion_male, proportion_
 ### NYPD EDA
 
 nypd_data <- nyc_data %>%
-  filter(agency_name == 'POLICE DEPARTMENT')
+  filter(agency_name == 'POLICE DEPARTMENT') %>%
+  mutate(work_location_borough = recode(work_location_borough, "RICHMOND" = 'STATEN ISLAND'))
+  
 
 ggplot(data = nypd_data, aes(gender))+
   geom_bar(na.rm = TRUE)+
@@ -77,8 +86,7 @@ nypd_data %>%
   group_by(gender, work_location_borough) %>%
   summarise(count = n()) %>%
 ggplot(., aes(work_location_borough, count, fill = gender))+
-  geom_col(stat = 'count')+
-  theme_economist() + scale_color_economist()+
+  geom_col(stat = 'count')
 
 
 
