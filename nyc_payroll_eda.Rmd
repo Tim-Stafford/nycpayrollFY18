@@ -48,12 +48,8 @@ filter(last_name == 'PANTALEO')
 
 ```
 ```{r}
-nypd_consolidated_titles <- nypd_data %>%
-  mutate(title_description = cont
 
-
-
-````{r}
+```{r}
 
 ### NYPD EDA
 
@@ -61,10 +57,11 @@ nypd_data <- nyc_data %>%
   filter(agency_name == 'POLICE DEPARTMENT') %>%
   filter(total_pay > 0) %>%
   filter(service_years > 0) %>%
-  mutate(work_location_borough = recode(work_location_borough, "RICHMOND" = 'STATEN ISLAND'))
+  mutate(work_location_borough = recode(work_location_borough, "RICHMOND" = 'STATEN ISLAND')) %>%
+  mutate(agency_start_date = mdy(agency_start_date))
   
-
-ggplot(data = nypd_data, aes(gender))+ ## Employees by Year (Gender)
+nypd_data %>%
+ggplot(aes(gender))+ ## Employees by Year (Gender)
   geom_bar(na.rm = TRUE)+
   geom_text(stat='count', aes(label=..count..), vjust=-.25)+
   facet_grid(~fiscal_year)
@@ -116,6 +113,7 @@ nypd_data %>%
 
 nypd_data %>%  ## -- Lollipop top 10 female jobs + Median Pay / IQR
   filter(fiscal_year == 2018) %>%
+  filter(agency_start_date < '1966/01/01')
   group_by(gender, title_description) %>%
   summarise(N = n(), median_pay = median(total_pay)) %>%
   mutate(freq = N / sum(N),
@@ -125,4 +123,8 @@ nypd_data %>%  ## -- Lollipop top 10 female jobs + Median Pay / IQR
 
 
 ```
+
+
+
+
 
