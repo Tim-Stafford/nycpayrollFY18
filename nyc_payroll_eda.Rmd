@@ -3,8 +3,11 @@ library(tidyverse)
 library(gender)
 library(lubridate)
 library(janitor)
+library(ggthemes)
 library (ggthemr)
-library(ggedit)
+library(devtools)
+
+ggthemr('dust')
 
 
 #load data
@@ -19,8 +22,8 @@ clean_names()
 nyc_data <- nyc_data %>%
 mutate(total_pay = regular_gross_paid + total_ot_paid + total_other_pay) %>%
 mutate(total_hours = regular_hours + ot_hours) %>%
-mutate(birth_year1 = '1960') %>%
-mutate(birth_year2 = '1996')
+mutate(birth_year1 = '1950') %>%
+mutate(birth_year2 = '2012')
 
 # Create gender column and service years column.
 
@@ -40,15 +43,9 @@ nyc_data <- nyc_data %>%
 nyc_data <- nyc_data %>%
 select(-c(payroll_number, birth_year1, birth_year2, proportion_male, proportion_female, year_min, year_max))
 
-# Create Pantaleo
-
-nypd_pantaleo <- nypd_data %>%
-filter(first_name == 'DANIEL' & last_name == 'PANTALEO')
-
 
 ```
 ```{r}
-
 
 
 ### NYPD EDA
@@ -56,10 +53,16 @@ filter(first_name == 'DANIEL' & last_name == 'PANTALEO')
 nypd_data <- nyc_data %>%
   filter(agency_name == 'POLICE DEPARTMENT') %>%
   filter(total_pay > 0) %>%
-  filter(service_years > 0) %>%
+  filter(total_hours > 1820) %>%
   mutate(work_location_borough = recode(work_location_borough, "RICHMOND" = 'STATEN ISLAND')) %>%
   mutate(agency_start_date = mdy(agency_start_date))
   
+# Create Pantaleo DF
+
+nypd_pantaleo <- nypd_data %>%
+filter(last_name == 'PANTALEO')
+
+
 nypd_data %>%
 ggplot(aes(gender))+ ## Employees by Year (Gender)
   geom_bar(na.rm = TRUE)+
@@ -108,48 +111,59 @@ nypd_data %>%
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ```{r} 
 
-nypd_data %>%  ##  Top 10 job titles by gender
+nypd_data %>%  ##
   filter(fiscal_year == 2018) %>%
-  filter(agency_start_date < '2017-10-01') %>%
-  filter(!is.na(gender)) %>%
-  filter(gender == 'male') %>%
+  filter(agency_start_date < '2017-11-01') %>%
   group_by(gender, title_description) %>%
-  summarise(N = n(), 
-            median_pay = median(total_pay),
-            median_ot = median(total_ot_paid)) %>%
+  summarise(N = n(), median_pay = median(total_pay)) %>%
   mutate(freq = N / sum(N),
          pct = round(freq*100), 0) %>%
-  top_n(10, N) %>%
-  arrange(desc(median_pay)) %>%
-  ggplot(aes(x = reorder(title_description, -median_pay), y = median_pay))+
-  geom_col()+
-  coord_flip()
+    filter(gender == 'male') %>%
+  top_n(10, N)
+  
+
 
 ```
 
-```{r}
 
-nypd_data %>%  ##  Top 10 job titles by gender
-  filter(fiscal_year == 2018) %>%
-  filter(agency_start_date < '2017-10-01') %>%
-  filter(!is.na(gender)) %>%
-  filter(gender == 'female') %>%
-  group_by(gender, title_description) %>%
-  summarise(N = n(), 
-            median_pay = median(total_pay),
-            median_ot = median(total_ot_paid)) %>%
-  mutate(freq = N / sum(N),
-         pct = round(freq*100), 0) %>%
-  top_n(10, N) %>%
-  arrange(desc(median_pay)) %>%
-  ggplot(aes(x = reorder(title_description, -median_pay), y = median_pay))+
-  geom_col()+
-  coord_flip()
-
-
-```
 
 
 
